@@ -1,0 +1,53 @@
+# NIIFL ESG & Impact Skill
+# Loaded by: IC Memo Drafting Agent, Outcomes Grader Agent
+
+## NIIFL ESG Framework — Three Pillars
+
+### Pillar 1 — Environment
+Score 1–5 on each sub-dimension:
+- Carbon footprint: Net GHG emissions, reduction commitments, offset quality
+- Renewable energy content: % of operations powered by renewables
+- Water stewardship: Water intensity, recycling, watershed impact
+- Biodiversity: Land use, habitat impact, environmental clearance status
+- Waste management: Hazardous waste handling, circular economy practices
+
+### Pillar 2 — Ease of Living
+Score 1–5 on each sub-dimension:
+- Energy access: Rural electrification, energy poverty reduction
+- Healthcare: Hospital beds, diagnostic centres, healthcare access created
+- Affordable housing: Units created, affordability metrics (EMI/income ratio)
+- Digital inclusion: Broadband connectivity, digital literacy programs
+- Mobility: Public transport, last-mile connectivity, accessibility
+
+### Pillar 3 — Economic Growth
+Score 1–5 on each sub-dimension:
+- Job creation: Direct jobs, indirect/induced employment (use multipliers)
+- Tax generation: GST, corporate tax, customs — annual contribution
+- Export facilitation: Forex earnings, export infrastructure
+- MSME linkages: Local supply chain, vendor development programs
+- Skill development: Training programs, apprenticeships
+
+## ESG Scoring Rubric (for Outcomes Grader)
+- Total ESG score: Sum of all sub-dimension scores / max possible × 100
+- Minimum score to proceed: 50/100
+- Flagged for board attention: Any sub-dimension scoring 1 (critical concern)
+- Best practice threshold: 75+ overall score
+
+## LP ESG Reporting Requirements
+- ADIA: TCFD-aligned climate disclosure required
+- CPP Investments: Net-zero portfolio commitment — scope 3 emissions required
+- Temasek: TotalValue framework — financial + social + environmental value
+- Ontario Teachers': Responsible investing integration — voting rights disclosure
+- AustralianSuper: Paris Agreement alignment — stranded asset risk assessment
+
+## UN SDG Mapping (Required in IC Memo)
+Map every investment to relevant UN SDGs. Most common for NIIFL:
+- SDG 7 (Affordable Clean Energy): Renewable power, energy access
+- SDG 9 (Infrastructure & Innovation): Roads, ports, airports, digital
+- SDG 11 (Sustainable Cities): Urban infrastructure, affordable housing
+- SDG 13 (Climate Action): Emission reduction, climate resilience
+
+## SEBI ESG Disclosure Requirements (AIF Category II)
+- Annual ESG report to SEBI with portfolio-level metrics
+- Board-level ESG committee or designated ESG officer required
+- Incident reporting: Material ESG events within 30 days

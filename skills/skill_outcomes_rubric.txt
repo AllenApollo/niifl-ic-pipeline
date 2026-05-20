@@ -1,0 +1,49 @@
+# NIIFL IC Memo Outcomes Rubric
+# Loaded by: Outcomes Grader Agent ONLY
+# This skill defines what a PASS looks like for every section of the IC memo.
+
+## Section Scoring Rules
+
+### Section 1 — Investment Thesis (PASS criteria)
+- PASS: Thesis is 2–4 sentences, clearly states why NIIFL specifically, mentions exit strategy
+- FAIL: Vague thesis, no exit strategy, no mention of fund mandate fit
+
+### Section 2 — Market & Competitive Position (PASS criteria)
+- PASS: TAM stated with source, competitive landscape has 3+ named competitors, regulatory status confirmed
+- FAIL: No TAM, no competitor names, regulatory status unclear
+
+### Section 3 — Financial Returns (PASS criteria)
+- PASS: Base case IRR stated vs fund hurdle, MOIC stated, sensitivity table present, 3 scenarios shown
+- FAIL: IRR not compared to hurdle, single scenario only, no sensitivity analysis
+
+### Section 4 — Risks & Mitigants (PASS criteria)
+- PASS: Minimum 4 risk categories covered, each has a named mitigant and residual risk rating
+- FAIL: Fewer than 4 risks, risks listed without mitigants, no residual risk rating
+
+### Section 5 — ESG & Impact (PASS criteria)
+- PASS: All 3 NIIFL pillars scored, minimum ESG score ≥ 50/100, UN SDG mapping present
+- FAIL: Any pillar missing, no SDG mapping, score below 50
+
+### Section 6 — Policy Alignment (PASS criteria)
+- PASS: NIP inclusion stated (yes/no with reason), at least 1 policy framework cited with evidence
+- FAIL: No NIP reference, no policy framework cited
+
+### Section 7 — Deal Structure (PASS criteria)
+- PASS: Equity stake % stated, board seats stated, key SHA terms listed, CPs listed
+- FAIL: Equity % missing, no governance terms, no CPs
+
+### Section 8 — Recommendation (PASS criteria)
+- PASS: Clear INVEST/PASS/DEFER stated, ticket size in INR Cr from named fund, next steps listed
+- FAIL: Ambiguous recommendation, no ticket size, no next steps
+
+## Overall Pass Criteria
+- All 8 sections must individually PASS
+- ESG score must be ≥ 50
+- IRR must meet or exceed fund hurdle (stated in fund mandate skill)
+- If any section FAILS → return to IC memo agent with specific gap description
+
+## Common Failure Patterns (from past memos)
+1. Section 3 failure: IRR shown but not compared to hurdle rate — always state "X% vs Y% hurdle"
+2. Section 5 failure: ESG section pasted from company CSR report — must be NIIFL's own assessment
+3. Section 6 failure: Policy section is 1 sentence — must have specific NIP project code or PLI tranche reference
+4. Section 4 failure: Exit risk not addressed — always include "exit risk" even for operating assets

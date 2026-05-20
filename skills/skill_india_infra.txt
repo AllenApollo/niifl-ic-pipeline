@@ -1,0 +1,64 @@
+# India Infrastructure Skill
+# Loaded by: Financial Modelling Agent, DD Research Agent
+
+## Financial Modelling Frameworks
+
+### Roads (NHAI Concessions)
+- Model type: Concession DCF
+- Key revenue driver: PCU traffic × toll rate
+- Toll escalation: Typically WPI-linked, annual
+- Concession period: 20–30 years from COD
+- Key risks: Traffic underperformance (use NHAI traffic studies), toll collection efficiency
+- Benchmark EBITDA margin: 85–92% (toll collection is high margin)
+- Exit: EV/EBITDA 12–18x for operational highway assets (2024–25 benchmarks)
+- Reference: NHAI ATVM data, MoRTH annual report
+
+### Ports (Major Port Trusts / PPP)
+- Model type: Concession DCF
+- Key revenue driver: Cargo volume (MTPA) × tariff
+- Tariff: TAMP-regulated or market-determined (non-major ports)
+- Key metrics: Berth occupancy, turnaround time, market share by commodity
+- Benchmark EBITDA margin: 55–70%
+- Exit: EV/EBITDA 14–20x for operating port assets
+- Reference: IPA (Indian Ports Association) statistics, MoPSW data
+
+### Power / Renewable Energy
+- Model type: Project finance DCF
+- Key revenue driver: Units generated (PLF × capacity) × tariff
+- Tariff: PPA-backed (fixed) or merchant (variable)
+- PLF benchmarks: Solar 20–26%, Wind 28–35%, Hydro site-specific
+- Key risks: Grid curtailment, PPA counterparty (DISCOM) credit quality
+- Benchmark EBITDA margin: 88–94% for renewable assets
+- Exit: EV/MW 4–7 Cr for solar; EV/MW 5–9 Cr for wind (2024–25)
+- Reference: CEA monthly generation reports, MNRE data
+
+### Airports
+- Model type: Concession DCF with aeronautical + non-aeronautical split
+- Aeronautical: AERA-regulated UDF, landing charges
+- Non-aeronautical: Retail, cargo, real estate — typically 30–40% of revenue
+- Key driver: Passenger throughput (domestic + international)
+- Reference: AAI traffic statistics, DGCA monthly data
+
+## Key India Macro Assumptions (Update Annually)
+- GDP growth: 6.5–7.5% (FY26 IMF/RBI estimates)
+- CPI inflation: 4.5–5.5%
+- WPI inflation: 3.5–4.5% (used for toll escalation)
+- 10-year G-sec yield: 6.5–7.2% (use as risk-free rate)
+- India equity risk premium: 6–8%
+- INR/USD long-term: 85–90 (use for cross-currency deals)
+
+## Regulatory Bodies Quick Reference
+| Sector | Regulator | Key Portal |
+|--------|-----------|------------|
+| Roads | NHAI / MoRTH | nhai.gov.in |
+| Ports | MoPSW / TAMP | shipping.gov.in |
+| Power | CERC / SERC | cercind.gov.in |
+| Airports | AERA / DGCA | aera.gov.in |
+| Telecom | TRAI | trai.gov.in |
+| Water | No central regulator | State govts |
+
+## National Infrastructure Pipeline (NIP) — Key Stats
+- Total NIP outlay: INR 111 lakh crore (2019–2025)
+- Top sectors: Energy (24%), Roads (19%), Urban (16%), Railways (13%)
+- Implementation gap: ~35–40% underfunded — opportunity for private capital
+- Source: NITI Aayog NIP dashboard (niti.gov.in)

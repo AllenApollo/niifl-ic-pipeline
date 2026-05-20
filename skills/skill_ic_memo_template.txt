@@ -1,0 +1,81 @@
+# NIIFL IC Memo Template Skill
+# Loaded by: IC Memo Drafting Agent
+
+## IC Memo — Standard Structure (All Funds)
+Every IC memo must contain exactly these 8 sections in this order:
+
+### Section 1 — Investment Thesis
+- Why this deal: core value proposition in 2–3 sentences
+- Why NIIFL: strategic fit with fund mandate, additionality
+- Why now: market timing, deal dynamics, competitive tension
+- Value creation plan: operational improvements, capacity expansion, re-rating catalysts
+- Exit strategy: strategic buyer, IPO, secondary — with timeline and comparable exits
+
+### Section 2 — Market & Competitive Position
+- Total Addressable Market (TAM) — size, growth rate, data source
+- Regulatory environment: concession terms, tariff regime, regulator track record
+- Competitive landscape: market share, barriers to entry, key competitors
+- Company positioning: differentiation, moats, customer concentration
+- India macro tailwinds: GDP growth, infrastructure spend, policy support
+
+### Section 3 — Financial Returns
+- Entry valuation: EV, EV/EBITDA multiple, rationale for multiple
+- Base case IRR and MOIC (clearly state vs fund hurdle)
+- Bull case and bear case IRR with assumption changes
+- Sensitivity table: minimum 2 variables (e.g. traffic/tariff for roads, PLF/tariff for power)
+- Historical financial summary: Revenue, EBITDA, PAT — last 3 years
+- Projected financials: Revenue, EBITDA, FCF — next 5 years
+- Debt structure: leverage ratio, DSCR, covenant headroom
+
+### Section 4 — Key Risks & Mitigants
+Format each risk as: [Risk Category] → [Specific Risk] → [Mitigant] → [Residual Risk: High/Med/Low]
+Required risk categories:
+- Regulatory risk
+- Construction / execution risk (if applicable)
+- Revenue / demand risk
+- Management / key person risk
+- Environmental / social risk
+- Exit risk
+
+### Section 5 — ESG & Impact Score
+NIIFL ESG Framework — score each pillar 1–5:
+- Environment: carbon footprint, renewable content, waste management practices
+- Ease of Living: jobs created, communities impacted, service accessibility
+- Economic Growth: GDP contribution, exports, MSME linkages, tax generation
+State alignment with NIIFL's three ESG pillars and UN SDGs.
+
+### Section 6 — Policy Alignment
+- NIP (National Infrastructure Pipeline): state whether project is in NIP
+- PLI scheme: relevance to applicable PLI sector
+- NMP (National Monetisation Pipeline): if asset is NMP candidate
+- PM GatiShakti: multimodal logistics integration
+- State government support: clearances, incentives, land status
+
+### Section 7 — Deal Structure & Terms
+- Proposed equity stake: % ownership, board seats, governance rights
+- Entry mechanism: primary / secondary / mix
+- Shareholder agreement key terms: tag, drag, ROFR, anti-dilution
+- Debt structure: senior, mezzanine, project finance — key covenants
+- Escrow / holdback arrangements
+- Conditions precedent: regulatory approvals required
+
+### Section 8 — Recommendation
+- Proposed action: INVEST / PASS / DEFER
+- Proposed ticket size: INR X Cr from [Fund Name]
+- IC approval sought: Term sheet authorisation / exclusivity / final investment
+- Dissenting views (if any)
+- Next steps if approved: milestones and timeline
+
+## Fund-Specific Additions
+
+### Master Fund Memos — Additional Requirements
+- Concession agreement summary: tenure, authority, step-in rights, termination triggers
+- Traffic/capacity projections: source, methodology, independent traffic study reference
+- O&M structure: in-house vs outsourced, key contracts
+- Regulatory asset base analysis (for regulated utilities)
+
+### IJF Memos — Additional Requirements
+- Japan nexus statement: nature of Japanese involvement (technology/capital/partnership)
+- JBIC criteria compliance: checklist confirmation
+- Cross-currency analysis: JPY/INR assumptions, hedging strategy
+- JBIC environmental and social standards: compliance confirmation

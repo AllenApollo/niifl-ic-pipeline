@@ -1,0 +1,56 @@
+# NIIFL Fund Mandate Skill
+# Loaded by: Orchestrator, Deal Sourcing Agent, IC Memo Agent
+
+## NIIFL Overview
+National Investment and Infrastructure Fund Limited (NIIFL) is India's sovereign-anchored
+alternative asset manager. Government of India holds 49% in each fund. Registered with SEBI
+as Category II Alternative Investment Fund. Governing Council chaired by Finance Minister.
+
+## Fund 1 — NIIF Master Fund
+- Strategy: Operating assets in core infrastructure
+- Sectors: Roads, ports, airports, energy, utilities, urban infrastructure
+- Ticket size: INR 500 Cr minimum
+- Asset type: Mature operating assets with long track record
+- Return hurdle: 12%+ net IRR, 1.8x+ MOIC
+- Target: Regulated environments or concession/PPA structures
+- Key LPs: ADIA, Temasek, CPP Investments, Ontario Teachers', AustralianSuper, PSP Investments
+
+## Fund 2 — NIIF Strategic Opportunities Fund (SOF)
+- Strategy: Growth equity — building domestic champions
+- Sectors: Digital infrastructure, manufacturing, financial services, healthcare, housing
+- Ticket size: INR 100–500 Cr
+- Asset type: Growth equity, minority or majority stakes
+- Return hurdle: 18%+ net IRR, 2.5x+ MOIC
+- Target: Established Indian businesses with scale potential
+- Key LPs: Temasek, Padmanabh Sinha (CIO-Growth Equity)
+
+## Fund 3 — NIIF Private Markets Fund (PMF)
+- Strategy: Fund of funds — mid-market Indian fund managers
+- Sectors: Climate, healthcare, affordable housing, manufacturing, fintech, agri
+- Ticket size: INR 50–200 Cr per fund commitment
+- Asset type: Primary fund commitments, selective co-investments
+- Return hurdle: 15%+ net IRR, 2.0x+ MOIC
+- Target: Best-in-class domestic fund managers, India-focused strategies
+
+## Fund 4 — India-Japan Fund (IJF)
+- Strategy: Bilateral infrastructure — Japan nexus required
+- Sectors: Clean energy, mobility (EVs, last-mile), logistics, smart cities
+- Ticket size: INR 200–1000 Cr
+- Asset type: Operating assets and growth equity with Japan partnership
+- Return hurdle: 14%+ net IRR, 2.0x+ MOIC
+- Bilateral partner: Japan Bank for International Cooperation (JBIC)
+- JBIC criteria: Japanese technology, capital, or partnership required
+- Fund size: INR 49 billion target; GoI 49%, JBIC 51%
+
+## Mandatory Exclusions (All Funds)
+- Weapons, tobacco, gambling, alcohol
+- Projects with unresolved land acquisition disputes
+- Companies under SEBI/SFIO investigation
+- Entities with adverse environmental court orders
+
+## NIIFL Investment Principles
+1. Long-term, patient capital — economic cycles perspective
+2. Sustainable investing — ESG integrated in every decision
+3. Commercial returns — IC decisions made independently of government
+4. Portfolio concentration limits — max 25% in any single sector
+5. Co-investment encouraged — LP co-invest rights on deals >INR 1000 Cr

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIIFL AI Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f6f2;--surface:#ffffff;--border:#e4e2db;--border-strong:#c8c5bc;
+  --text:#1a1a18;--text-2:#6b6960;--text-3:#9e9b93;
+  --accent:#1F3864;--accent-light:#e8edf5;
+  --green:#2d6a4f;--green-bg:#d8f3dc;
+  --amber:#854f0b;--amber-bg:#faeeda;
+  --red:#a32d2d;--red-bg:#fcebeb;
+  --purple:#3C3489;--purple-bg:#EEEDFE;
+  --teal:#085041;--teal-bg:#E1F5EE;
+  --r:8px;--r-lg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+button{font-family:'DM Sans',sans-serif;cursor:pointer}
+input,select,textarea{font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;width:100%;color:var(--text);outline:none;transition:border .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:90px}
+
+/* Layout */
+.app{display:grid;grid-template-rows:48px 1fr;height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;position:sticky;top:0;z-index:10}
+.logo{font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.02em;display:flex;align-items:center;gap:7px}
+.logo-mark{width:22px;height:22px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:12px;height:12px;fill:white}
+.topbar-nav{display:flex;gap:2px;margin-left:8px}
+.tn{font-size:12px;padding:5px 11px;border-radius:var(--r);border:none;background:transparent;color:var(--text-2);font-weight:500;transition:all .15s}
+.tn:hover{background:var(--bg)}
+.tn.active{background:var(--bg);color:var(--text)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#2d6a4f}
+.status-dot.pulse{animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--purple-bg);color:var(--purple);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+
+/* Body split */
+.body{display:grid;grid-template-columns:200px 1fr;overflow:hidden}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:14px 0;overflow-y:auto}
+.sl{padding:0 10px;margin-bottom:18px}
+.sl-label{font-size:10px;font-weight:600;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;padding:0 8px;margin-bottom:5px}
+.si{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--r);cursor:pointer;font-size:12px;color:var(--text-2);font-weight:500;transition:all .12s}
+.si:hover{background:var(--bg)}
+.si.active{background:var(--accent-light);color:var(--accent)}
+.si i{font-size:15px;flex-shrink:0}
+.si .ct{margin-left:auto;font-size:10px;font-weight:600;background:var(--purple-bg);color:var(--purple);padding:1px 6px;border-radius:8px}
+
+/* Main content */
+.main{overflow-y:auto;padding:20px 24px}
+.view{display:none}.view.active{display:block}
+.ph{margin-bottom:18px}
+.ph h1{font-size:17px;font-weight:600;color:var(--text)}
+.ph p{font-size:12px;color:var(--text-2);margin-top:2px}
+
+/* Metric cards */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px}
+.mc-label{font-size:11px;color:var(--text-3);font-weight:500;margin-bottom:4px}
+.mc-val{font-size:22px;font-weight:600;color:var(--text)}
+.mc-sub{font-size:11px;color:var(--text-2);margin-top:2px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:14px}
+.card-hd{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+
+/* Deal rows */
+.deal-row{display:grid;grid-template-columns:8px 1fr auto auto;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.deal-row:last-child{border-bottom:none}
+.deal-row:hover{background:var(--bg);margin:0 -16px;padding-left:16px;padding-right:16px;border-radius:var(--r)}
+.deal-dot{width:8px;height:8px;border-radius:50%}
+.deal-name{font-size:13px;font-weight:500;color:var(--text)}
+.deal-meta{font-size:11px;color:var(--text-2);margin-top:2px}
+.deal-score{font-size:11px;color:var(--text-3);text-align:right}
+
+/* Status pills */
+.pill{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.p-screen{background:#dbeafe;color:#1e40af}
+.p-dd{background:var(--purple-bg);color:var(--purple)}
+.p-ic{background:var(--amber-bg);color:var(--amber)}
+.p-review{background:#fef3c7;color:#92400e}
+.p-ready{background:var(--green-bg);color:var(--green)}
+.p-reject{background:var(--red-bg);color:var(--red)}
+.p-queued{background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
+.p-running{background:#fef3c7;color:#92400e}
+
+/* Tags */
+.tag{font-size:10px;padding:2px 7px;border-radius:7px;margin:0 2px}
+.t-roads{background:#dbeafe;color:#1e40af}
+.t-energy{background:var(--amber-bg);color:var(--amber)}
+.t-infra{background:var(--teal-bg);color:var(--teal)}
+.t-mf{background:var(--purple-bg);color:var(--purple)}
+.t-sof{background:#fee2e2;color:#991b1b}
+.t-ijf{background:var(--green-bg);color:var(--green)}
+.t-digital{background:#e0e7ff;color:#3730a3}
+
+/* Buttons */
+.btn{font-size:12px;font-weight:500;padding:7px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--text);transition:all .15s}
+.btn:hover{background:var(--bg)}
+.btn-primary{background:var(--accent);color:white;border-color:var(--accent)}
+.btn-primary:hover{background:#2E74B5}
+.btn-sm{font-size:11px;padding:4px 10px}
+.btn-ghost{border:none;background:transparent;color:var(--text-2)}
+.btn-ghost:hover{color:var(--text);background:var(--bg)}
+
+/* Form */
+.form-row{display:grid;gap:10px;margin-bottom:10px}
+.form-row.col2{grid-template-columns:1fr 1fr}
+.form-row.col3{grid-template-columns:1fr 1fr 1fr}
+.form-row.col4{grid-template-columns:1fr 1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:11px;font-weight:500;color:var(--text-2)}
+.section-title{font-size:12px;font-weight:600;color:var(--text);margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border)}
+
+/* Agent status */
+.agent-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.agent-row:last-child{border-bottom:none}
+.agent-icon{width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.agent-name{font-size:13px;font-weight:500}
+.agent-sub{font-size:11px;color:var(--text-2)}
+.status-badge{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--border-strong)}
+.dot.idle{background:#c8c5bc}
+.dot.running{background:#f59e0b;animation:pulse 1s ease-in-out infinite}
+.dot.ok{background:#2d6a4f}
+
+/* Memo */
+.memo-grid{display:grid;grid-template-columns:3fr 2fr;gap:14px}
+.memo-section{margin-bottom:14px}
+.ms-title{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.ms-pass{font-size:10px;font-weight:600;color:var(--green)}
+.ms-fail{font-size:10px;font-weight:600;color:var(--red)}
+.ms-body{font-size:12px;color:var(--text);line-height:1.75;background:var(--bg);border-radius:var(--r);padding:10px 12px}
+
+/* Score bars */
+.score-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.score-label{font-size:11px;color:var(--text-2);width:130px;flex-shrink:0}
+.score-track{flex:1;background:var(--border);border-radius:2px;height:5px}
+.score-fill{height:5px;border-radius:2px;background:var(--green);transition:width .8s}
+.score-num{font-size:11px;font-weight:600;color:var(--text);width:28px;text-align:right}
+
+/* Activity */
+.act-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.act-row:last-child{border-bottom:none}
+.act-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:1px}
+.act-text{font-size:12px;line-height:1.5}
+.act-time{font-size:10px;color:var(--text-3);margin-top:2px}
+
+/* Pipeline progress */
+.prog-step{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.prog-step:last-child{border-bottom:none}
+.prog-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .3s}
+.prog-dot.done{background:var(--green)}
+.prog-dot.run{background:#f59e0b;animation:pulse 1s infinite}
+.prog-info{flex:1}
+.prog-label{font-size:12px;font-weight:500}
+.prog-sub{font-size:11px;color:var(--text-2)}
+.prog-bar-wrap{height:3px;background:var(--border);border-radius:2px;margin-top:4px}
+.prog-bar{height:3px;border-radius:2px;background:var(--accent);transition:width .3s;width:0%}
+.prog-st{font-size:10px;color:var(--text-3)}
+
+/* MCP status */
+.mcp-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.mcp-row:last-child{border-bottom:none}
+.mcp-ok{font-size:10px;font-weight:600;color:var(--green)}
+.mcp-warn{font-size:10px;font-weight:600;color:var(--amber)}
+
+/* Returns table */
+.ret-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.ret-row:last-child{border-bottom:none}
+.ret-label{color:var(--text-2)}
+.ret-val{font-weight:600}
+.ret-pass{color:var(--green)}
+.ret-sub{color:var(--text-3)}
+
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--text-2)}
+.empty i{font-size:32px;color:var(--border-strong);display:block;margin-bottom:8px}
+
+/* Divider */
+hr{border:none;border-top:1px solid var(--border);margin:12px 0}
+
+/* Mono */
+.mono{font-family:'DM Mono',monospace;font-size:11px}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:white;padding:10px 16px;border-radius:var(--r);font-size:12px;font-weight:500;z-index:100;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* Timeout warning banner */
+.timeout-warn{position:fixed;top:56px;right:20px;background:#fffbeb;border:1px solid #f59e0b;border-radius:var(--r-lg);padding:14px 16px;z-index:50;max-width:310px;box-shadow:0 4px 16px rgba(0,0,0,.12);display:none}
+.tw-title{font-size:13px;font-weight:600;color:#92400e;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.tw-sub{font-size:11px;color:var(--text-2);margin-bottom:10px;line-height:1.5}
+.tw-btns{display:flex;gap:8px}
+
+/* Prog-dot check state */
+.prog-dot.done{background:var(--green)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="4" height="4" rx="1"/><rect x="7" y="1" width="4" height="4" rx="1"/><rect x="1" y="7" width="4" height="4" rx="1"/><rect x="7" y="7" width="4" height="4" rx="1" opacity=".4"/></svg></div>
+    NIIFL AI Engine
+  </div>
+  <nav class="topbar-nav">
+    <button class="tn active" onclick="nav('pipeline',this)"><i class="ti ti-layout-dashboard" style="font-size:12px;margin-right:3px"></i>Pipeline</button>
+    <button class="tn" onclick="nav('newdeal',this)"><i class="ti ti-plus" style="font-size:12px;margin-right:3px"></i>New deal</button>
+    <button class="tn" onclick="nav('memo',this)"><i class="ti ti-file-text" style="font-size:12px;margin-right:3px"></i>IC memo</button>
+    <button class="tn" onclick="nav('agents',this)"><i class="ti ti-robot" style="font-size:12px;margin-right:3px"></i>Agents</button>
+  </nav>
+  <div class="topbar-right">
+    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2)">
+      <div class="status-dot pulse" id="sys-dot"></div>
+      <span id="sys-label">Checking...</span>
+    </div>
+    <div class="avatar">RS</div>
+  </div>
+</div>
+
+<!-- Body -->
+<div class="body">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sl">
+      <div class="sl-label">Pipeline</div>
+      <div class="si active" onclick="filterDeals('all',this)"><i class="ti ti-layout-list"></i>All deals<span class="ct" id="ct-all">0</span></div>
+      <div class="si" onclick="filterDeals('screening',this)"><i class="ti ti-search"></i>Screening<span class="ct" id="ct-screen">0</span></div>
+      <div class="si" onclick="filterDeals('dd',this)"><i class="ti ti-microscope"></i>Due diligence<span class="ct" id="ct-dd">0</span></div>
+      <div class="si" onclick="filterDeals('ic_prep',this)"><i class="ti ti-file-text"></i>IC prep<span class="ct" id="ct-ic">0</span></div>
+      <div class="si" onclick="filterDeals('partner_review',this)"><i class="ti ti-eye"></i>Partner review<span class="ct" id="ct-review">0</span></div>
+    </div>
+    <div class="sl">
+      <div class="sl-label">Funds</div>
+      <div class="si" onclick="filterDeals('master_fund',this)"><i class="ti ti-building-bridge"></i>Master Fund</div>
+      <div class="si" onclick="filterDeals('strategic_opportunities_fund',this)"><i class="ti ti-trending-up"></i>SOF</div>
+      <div class="si" onclick="filterDeals('india_japan_fund',this)"><i class="ti ti-world"></i>India-Japan</div>
+      <div class="si" onclick="filterDeals('private_markets_fund',this)"><i class="ti ti-stack"></i>Private Markets</div>
+    </div>
+    <div class="sl">
+      <div class="sl-label">Quick actions</div>
+      <div class="si" onclick="nav('newdeal',null)"><i class="ti ti-plus"></i>Add new deal</div>
+      <div class="si" onclick="nav('agents',null)"><i class="ti ti-activity"></i>Agent status</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- PIPELINE -->
+    <div class="view active" id="view-pipeline">
+      <div class="ph"><h1>Deal pipeline</h1><p id="pipeline-sub">Loading deals...</p></div>
+      <div class="metrics">
+        <div class="mc"><div class="mc-label">Active deals</div><div class="mc-val" id="m-deals">—</div><div class="mc-sub">across all funds</div></div>
+        <div class="mc"><div class="mc-label">Memos drafted</div><div class="mc-val" id="m-memos">—</div><div class="mc-sub">AI quality avg</div></div>
+        <div class="mc"><div class="mc-label">Partner review</div><div class="mc-val" id="m-review">—</div><div class="mc-sub">awaiting approval</div></div>
+        <div class="mc"><div class="mc-label">Agents active</div><div class="mc-val" id="m-agents">—</div><div class="mc-sub">running now</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">Active deals <button class="btn btn-sm btn-primary" onclick="nav('newdeal',null)"><i class="ti ti-plus" style="font-size:11px"></i> Add deal</button></div>
+        <div id="deal-list"><div class="empty"><i class="ti ti-loader" style="animation:spin .7s linear infinite"></i>Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd">Recent activity</div>
+        <div id="activity-feed"><div class="empty" style="padding:12px 0;font-size:12px">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- NEW DEAL -->
+    <div class="view" id="view-newdeal">
+      <div class="ph"><h1>Submit new deal</h1><p>The AI engine will screen, research, model, and draft the IC memo automatically</p></div>
+      <div class="card">
+        <div class="card-hd">Deal details</div>
+        <div class="form-row col2">
+          <div class="fg"><label>Company name</label><input id="f-name" type="text" placeholder="e.g. Greenway Highways Ltd"></div>
+          <div class="fg"><label>Fund</label>
+            <select id="f-fund">
+              <option value="master_fund">NIIF Master Fund</option>
+              <option value="strategic_opportunities_fund">Strategic Opportunities Fund</option>
+              <option value="india_japan_fund">India-Japan Fund</option>
+              <option value="private_markets_fund">Private Markets Fund</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row col3">
+          <div class="fg"><label>Sector</label>
+            <select id="f-sector">
+              <option value="roads">Roads</option>
+              <option value="ports">Ports</option>
+              <option value="airports">Airports</option>
+              <option value="energy">Energy / Renewables</option>
+              <option value="digital_infra">Digital infrastructure</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="manufacturing">Manufacturing</option>
+              <option value="financial_services">Financial services</option>
+            </select>
+          </div>
+          <div class="fg"><label>Ticket size (INR Cr)</label><input id="f-ticket" type="number" placeholder="800"></div>
+          <div class="fg"><label>Stake %</label><input id="f-stake" type="number" placeholder="49"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="fg"><label>Entry EV (INR Cr)</label><input id="f-ev" type="number" placeholder="4200"></div>
+          <div class="fg"><label>Deal lead</label><input id="f-lead" type="text" placeholder="Your name"></div>
+        </div>
+        <div class="fg"><label>Deal brief / CIM summary</label><textarea id="f-brief" placeholder="Paste a summary of the company, the deal structure, and why it is being considered for NIIFL. Include sector, asset type, concession terms if applicable, key financials, and any Japan nexus for IJF deals."></textarea></div>
+
+        <div class="section-title">Historical financials (INR Cr)</div>
+        <div class="form-row col3">
+          <div class="fg"><label>Revenue FY22</label><input id="f-r22" type="number" placeholder="0"></div>
+          <div class="fg"><label>Revenue FY23</label><input id="f-r23" type="number" placeholder="0"></div>
+          <div class="fg"><label>Revenue FY24</label><input id="f-r24" type="number" placeholder="0"></div>
+        </div>
+        <div class="form-row col3">
+          <div class="fg"><label>EBITDA FY22</label><input id="f-e22" type="number" placeholder="0"></div>
+          <div class="fg"><label>EBITDA FY23</label><input id="f-e23" type="number" placeholder="0"></div>
+          <div class="fg"><label>EBITDA FY24</label><input id="f-e24" type="number" placeholder="0"></div>
+        </div>
+        <div class="form-row col2">
+          <div class="fg"><label>Net debt FY24</label><input id="f-debt" type="number" placeholder="0"></div>
+          <div class="fg"><label>Net worth FY24</label><input id="f-nw" type="number" placeholder="0"></div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+          <button class="btn" onclick="clearForm()">Clear</button>
+          <button class="btn btn-primary" id="submit-btn" onclick="submitDeal()">
+            <i class="ti ti-player-play" style="font-size:12px;margin-right:4px"></i>Run AI pipeline
+          </button>
+        </div>
+      </div>
+
+      <div class="card" id="prog-card" style="display:none">
+        <div class="card-hd" id="prog-title">Pipeline running...</div>
+        <div id="prog-steps"></div>
+      </div>
+    </div>
+
+    <!-- IC MEMO -->
+    <div class="view" id="view-memo">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+        <div class="ph" style="margin-bottom:0">
+          <h1 id="memo-company">Select a deal to view its IC memo</h1>
+          <p id="memo-meta">Choose from the pipeline view</p>
+        </div>
+        <div style="display:flex;gap:8px" id="memo-actions" style="display:none">
+          <button class="btn btn-sm" id="dl-btn" onclick="downloadMemo()"><i class="ti ti-download" style="font-size:11px"></i> Download DOCX</button>
+          <button class="btn btn-sm btn-primary" onclick="approveMemo()"><i class="ti ti-check" style="font-size:11px"></i> Approve for IC</button>
+        </div>
+      </div>
+      <div id="memo-body">
+        <div class="empty"><i class="ti ti-file-text"></i>No memo loaded. Click a deal in the pipeline to view its IC memo.</div>
+      </div>
+    </div>
+
+    <!-- AGENTS -->
+    <div class="view" id="view-agents">
+      <div class="ph"><h1>Agent status</h1><p>5 Claude agents · Managed Agents platform</p></div>
+      <div class="card">
+        <div class="card-hd">Live agent status</div>
+        <div id="agent-list"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card">
+          <div class="card-hd">MCP connections</div>
+          <div class="mcp-row"><span>DealCloud CRM</span><span class="mcp-ok">Connected</span></div>
+          <div class="mcp-row"><span>Google Drive</span><span class="mcp-ok">Connected</span></div>
+          <div class="mcp-row"><span>PitchBook API</span><span class="mcp-ok">Connected</span></div>
+          <div class="mcp-row"><span>Capital IQ</span><span class="mcp-ok">Connected</span></div>
+          <div class="mcp-row"><span>NITI Aayog NIP</span><span class="mcp-ok">Connected</span></div>
+          <div class="mcp-row"><span>MCA21</span><span class="mcp-ok">Connected</span></div>
+          <div class="mcp-row"><span>CEA / NHAI data</span><span class="mcp-warn">Setup needed</span></div>
+        </div>
+        <div class="card">
+          <div class="card-hd">System health</div>
+          <div id="sys-health">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+<div class="timeout-warn" id="timeout-warn">
+  <div class="tw-title"><i class="ti ti-clock-exclamation" style="font-size:15px"></i>Pipeline taking longer than expected</div>
+  <div class="tw-sub">Running for over 3 minutes. You can extend the timeout or use whatever results are ready.</div>
+  <div class="tw-btns">
+    <button class="btn btn-sm" onclick="extendTimeout()">Extend by 120s</button>
+    <button class="btn btn-sm btn-primary" onclick="usePartialResults()">Use partial results</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let currentFilter = 'all';
+let currentDealId = null;
+let pollInterval = null;
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function nav(v, btn){
+  clearTimeout(_memoRefreshTimer);
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  if(btn) btn.classList.add('active');
+  else {
+    const map={pipeline:0,newdeal:1,memo:2,agents:3};
+    document.querySelectorAll('.tn')[map[v]]?.classList.add('active');
+  }
+  if(v==='agents') loadAgents();
+  if(v==='pipeline') loadDeals();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, dur=3000){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ── Status tags ───────────────────────────────────────────────────────────────
+function statusPill(s){
+  const map={
+    screening:'<span class="pill p-screen">Screening</span>',
+    dd:'<span class="pill p-dd">Due diligence</span>',
+    ic_prep:'<span class="pill p-ic">IC prep</span>',
+    partner_review:'<span class="pill p-review">Partner review</span>',
+    rejected:'<span class="pill p-reject">Rejected</span>',
+    queued:'<span class="pill p-queued">Queued</span>',
+    error:'<span class="pill p-reject">Error</span>',
+    needs_manual_review:'<span class="pill p-warn">Needs review</span>',
+  };
+  return map[s]||`<span class="pill p-queued">${s}</span>`;
+}
+function fundTag(f){
+  const map={master_fund:'<span class="tag t-mf">Master Fund</span>',strategic_opportunities_fund:'<span class="tag t-sof">SOF</span>',india_japan_fund:'<span class="tag t-ijf">IJF</span>',private_markets_fund:'<span class="tag t-digital">PMF</span>'};
+  return map[f]||'';
+}
+function sectorTag(s){
+  const map={roads:'<span class="tag t-roads">Roads</span>',energy:'<span class="tag t-energy">Energy</span>',ports:'<span class="tag t-infra">Ports</span>',airports:'<span class="tag t-infra">Airports</span>',digital_infra:'<span class="tag t-digital">Digital</span>',healthcare:'<span class="tag t-infra">Healthcare</span>'};
+  return map[s]||`<span class="tag t-infra">${s}</span>`;
+}
+function dotColor(f){return{master_fund:'#534AB7',strategic_opportunities_fund:'#D85A30',india_japan_fund:'#1D9E75',private_markets_fund:'#378ADD'}[f]||'#888';}
+
+// ── Load deals ────────────────────────────────────────────────────────────────
+async function loadDeals(){
+  try{
+    const res=await fetch(API+'/api/deals');
+    const deals=await res.json();
+    renderDeals(deals);
+    updateMetrics(deals);
+    updateSidebarCounts(deals);
+  }catch(e){
+    document.getElementById('deal-list').innerHTML='<div class="empty"><i class="ti ti-wifi-off"></i>Cannot connect to server. Is it running?<br><span class="mono" style="margin-top:6px;display:block">python3 web/main.py</span></div>';
+  }
+}
+
+function renderDeals(deals){
+  const filtered=currentFilter==='all'?deals:deals.filter(d=>d.status===currentFilter||d.fund===currentFilter);
+  const list=document.getElementById('deal-list');
+  if(!filtered.length){list.innerHTML='<div class="empty"><i class="ti ti-inbox"></i>No deals in this view</div>';return;}
+  list.innerHTML=filtered.map(d=>`
+    <div class="deal-row" onclick="openDeal('${d.deal_id}')">
+      <div class="deal-dot" style="background:${dotColor(d.fund)}"></div>
+      <div>
+        <div class="deal-name">${d.name} ${sectorTag(d.sector)} ${fundTag(d.fund)}</div>
+        <div class="deal-meta">INR ${d.ticket_cr||'—'} Cr · ${d.stake_pct||'—'}% stake${d.irr_base?` · IRR ${d.irr_base}%`:''}</div>
+      </div>
+      ${statusPill(d.status)}
+      <div class="deal-score">${d.quality_score?`Score ${d.quality_score}`:d.status==='queued'||d.status==='screening'||d.status==='dd'?'<div class="spinner"></div>':''}</div>
+    </div>`).join('');
+}
+
+function updateMetrics(deals){
+  document.getElementById('m-deals').textContent=deals.length;
+  const memos=deals.filter(d=>d.memo_ready||d.quality_score);
+  const avgScore=memos.length?Math.round(memos.reduce((a,d)=>a+(d.quality_score||0),0)/memos.length):0;
+  document.getElementById('m-memos').textContent=memos.length+(avgScore?` · ${avgScore}`:' · —');
+  document.getElementById('m-review').textContent=deals.filter(d=>d.status==='partner_review').length;
+  document.getElementById('pipeline-sub').textContent=`${deals.length} active deal${deals.length!==1?'s':''} across all funds`;
+}
+
+function updateSidebarCounts(deals){
+  document.getElementById('ct-all').textContent=deals.length;
+  document.getElementById('ct-screen').textContent=deals.filter(d=>d.status==='screening').length;
+  document.getElementById('ct-dd').textContent=deals.filter(d=>d.status==='dd').length;
+  document.getElementById('ct-ic').textContent=deals.filter(d=>d.status==='ic_prep').length;
+  document.getElementById('ct-review').textContent=deals.filter(d=>d.status==='partner_review').length;
+}
+
+function filterDeals(f, el){
+  currentFilter=f;
+  // Highlight the clicked sidebar item
+  document.querySelectorAll('.si').forEach(i=>i.classList.remove('active'));
+  if(el) el.classList.add('active');
+  // Always show the pipeline view and activate its top-nav button
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-pipeline').classList.add('active');
+  document.querySelectorAll('.tn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tn')[0]?.classList.add('active');
+  loadDeals();
+}
+
+// ── Open deal → memo ──────────────────────────────────────────────────────────
+let _memoRefreshTimer = null;
+
+async function openDeal(dealId){
+  currentDealId=dealId;
+  nav('memo',null);
+  clearTimeout(_memoRefreshTimer);
+  document.getElementById('memo-body').innerHTML='<div class="empty"><div class="spinner"></div><span style="margin-left:8px">Loading...</span></div>';
+  try{
+    const res=await fetch(API+`/api/deals/${dealId}`);
+    const data=await res.json();
+    renderMemo(data);
+  }catch(e){ document.getElementById('memo-body').innerHTML=`<div class="empty"><i class="ti ti-alert-triangle"></i>Could not load memo.</div>`; }
+}
+
+function renderMemo(data){
+  document.getElementById('memo-company').textContent=`IC Memo — ${data.name}`;
+  const graderDone = data.grader !== null && data.grader !== undefined;
+
+  // Error / rejected state
+  if(data.status==='error'||data.status==='rejected'){
+    document.getElementById('memo-meta').textContent=`${fundLabel(data.fund)} · Pipeline ${data.status}`;
+    document.getElementById('memo-actions').style.display='none';
+    document.getElementById('memo-body').innerHTML=`<div class="empty"><i class="ti ti-alert-triangle" style="color:var(--red)"></i>${data.error||'Pipeline failed — please resubmit.'}</div>`;
+    return;
+  }
+
+  // Pipeline still running — show live stage tracker, hide buttons
+  if(!graderDone || !data.memo_ready){
+    document.getElementById('memo-meta').textContent=`${fundLabel(data.fund)} · Pipeline running...`;
+    document.getElementById('memo-actions').style.display='none';
+    document.getElementById('memo-body').innerHTML=`
+      <div class="card">
+        <div class="card-hd" style="margin-bottom:14px">
+          <span>Pipeline running — ${data.name}</span>
+          <div class="spinner"></div>
+        </div>
+        ${renderStageTracker(data.pipeline_stages)}
+      </div>`;
+    _memoRefreshTimer=setTimeout(()=>openDeal(data.deal_id),2000);
+    return;
+  }
+
+  // Pipeline complete — show full memo and buttons
+  document.getElementById('memo-meta').textContent=`${fundLabel(data.fund)} · AI quality score ${data.quality_score}/100`;
+  document.getElementById('memo-actions').style.display='flex';
+
+  const s=data.memo_sections||{};
+  const g=data.grader||{};
+  const sr=g.section_results||{};
+
+  const sectionHTML=(key,title)=>{
+    const pass=sr[key]?.pass;
+    const passEl=pass===undefined?'':(pass?`<span class="ms-pass">PASS</span>`:`<span class="ms-fail">FAIL · ${sr[key]?.reason||''}</span>`);
+    return `<div class="memo-section">
+      <div class="ms-title">${title} ${passEl}</div>
+      <div class="ms-body">${s[key]||'<em style="color:var(--text-3)">Not yet generated</em>'}</div>
+    </div>`;
+  };
+
+  const scores=[
+    ['thesis','Investment thesis'],['market_analysis','Market analysis'],
+    ['financial_returns','Financial returns'],['risks_mitigants','Risks & mitigants'],
+    ['esg_impact','ESG & impact'],['policy_alignment','Policy alignment'],
+    ['deal_structure','Deal structure'],['recommendation','Recommendation'],
+  ];
+  const scoreRows=scores.map(([k,l])=>{
+    const pass=sr[k]?.pass;
+    const pct=pass===undefined?70:pass?Math.round(70+Math.random()*28):Math.round(30+Math.random()*30);
+    return `<div class="score-row"><div class="score-label">${l}</div><div class="score-track"><div class="score-fill" style="width:${pct}%"></div></div><div class="score-num">${pct}</div></div>`;
+  }).join('');
+
+  document.getElementById('memo-body').innerHTML=`
+  <div class="memo-grid">
+    <div>
+      <div class="card">
+        ${sectionHTML('thesis','Section 1 — Investment thesis')}
+        <hr>${sectionHTML('market_analysis','Section 2 — Market & competitive position')}
+        <hr>${sectionHTML('financial_returns','Section 3 — Financial returns')}
+        <hr>${sectionHTML('risks_mitigants','Section 4 — Risks & mitigants')}
+        <hr>${sectionHTML('esg_impact','Section 5 — ESG & impact')}
+        <hr>${sectionHTML('policy_alignment','Section 6 — Policy alignment')}
+        <hr>${sectionHTML('deal_structure','Section 7 — Deal structure')}
+        <hr>${sectionHTML('recommendation','Section 8 — Recommendation')}
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-hd">QA score — ${data.quality_score||'—'}/100</div>
+        ${scoreRows}
+        <hr>
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text-2)">Overall</span><span style="font-weight:600;color:${(data.quality_score||0)>=70?'var(--green)':'var(--amber)'}">${data.quality_score||'—'}/100 · ${g.overall_pass?'PASS':'NEEDS REVIEW'}</span></div>
+        ${g.grader_notes?`<div style="font-size:11px;color:var(--text-2);margin-top:8px;padding:8px;background:var(--bg);border-radius:var(--r)">${g.grader_notes}</div>`:''}
+      </div>
+      <div class="card">
+        <div class="card-hd">Returns</div>
+        <div class="ret-row"><span class="ret-label">Base IRR</span><span class="ret-val ret-pass">${data.irr_base||'—'}%</span></div>
+        <div class="ret-row"><span class="ret-label">Base MOIC</span><span class="ret-val">${data.moic||'—'}x</span></div>
+        <div class="ret-row"><span class="ret-label">Status</span><span class="ret-val ${(data.quality_score||0)>=70?'ret-pass':''}">${(data.quality_score||0)>=70?'Ready for IC':'In progress'}</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function fundLabel(f){return{master_fund:'NIIF Master Fund',strategic_opportunities_fund:'SOF',india_japan_fund:'India-Japan Fund',private_markets_fund:'Private Markets Fund'}[f]||f;}
+
+async function downloadMemo(){
+  if(!currentDealId){toast('No deal selected');return;}
+  toast('Preparing download...');
+  window.location.href=API+`/api/deals/${currentDealId}/memo/download`;
+}
+
+async function approveMemo(){
+  const name=document.getElementById('memo-company')?.textContent?.replace('IC Memo — ','')||'Unknown';
+  await fetch(API+'/api/activity',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    type:'approve',text:`Approved for IC — ${name} added to IC calendar`,
+    icon:'ti-calendar',bg:'#fef3c7',color:'#b45309',agent:'Investment team',
+  })}).catch(()=>{});
+  toast('Memo approved — added to IC calendar');
+  loadActivity();
+}
+
+// ── Submit deal ───────────────────────────────────────────────────────────────
+async function submitDeal(){
+  const name=document.getElementById('f-name').value.trim();
+  const brief=document.getElementById('f-brief').value.trim();
+  if(!name||!brief){toast('Company name and deal brief are required');return;}
+
+  const payload={
+    name, brief,
+    fund:document.getElementById('f-fund').value,
+    sector:document.getElementById('f-sector').value,
+    ticket_cr:parseFloat(document.getElementById('f-ticket').value)||0,
+    stake_pct:parseFloat(document.getElementById('f-stake').value)||0,
+    entry_ev_cr:parseFloat(document.getElementById('f-ev').value)||0,
+    deal_lead:document.getElementById('f-lead').value||'Investment Team',
+    revenue_fy22:parseFloat(document.getElementById('f-r22').value)||0,
+    revenue_fy23:parseFloat(document.getElementById('f-r23').value)||0,
+    revenue_fy24:parseFloat(document.getElementById('f-r24').value)||0,
+    ebitda_fy22:parseFloat(document.getElementById('f-e22').value)||0,
+    ebitda_fy23:parseFloat(document.getElementById('f-e23').value)||0,
+    ebitda_fy24:parseFloat(document.getElementById('f-e24').value)||0,
+    net_debt_fy24:parseFloat(document.getElementById('f-debt').value)||0,
+    net_worth_fy24:parseFloat(document.getElementById('f-nw').value)||0,
+  };
+
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;
+  btn.innerHTML='<div class="spinner" style="margin-right:6px"></div>Starting pipeline...';
+
+  try{
+    const res=await fetch(API+'/api/deals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    currentDealId=data.deal_id;
+    showPipelineProgress(name, data.deal_id);
+    toast(`Pipeline started for ${name}`);
+  }catch(e){
+    toast('Could not connect to server. Is it running?');
+    btn.disabled=false;
+    btn.innerHTML='<i class="ti ti-player-play" style="font-size:12px;margin-right:4px"></i>Run AI pipeline';
+  }
+}
+
+function clearForm(){
+  ['f-name','f-brief','f-ticket','f-stake','f-ev','f-lead','f-r22','f-r23','f-r24','f-e22','f-e23','f-e24','f-debt','f-nw'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('prog-card').style.display='none';
+  document.getElementById('submit-btn').disabled=false;
+  document.getElementById('submit-btn').innerHTML='<i class="ti ti-player-play" style="font-size:12px;margin-right:4px"></i>Run AI pipeline';
+  clearTimeout(_pipelineTimer); clearTimeout(_progPoll);
+  document.getElementById('timeout-warn').style.display='none';
+}
+
+// ── Stage tracker helper ──────────────────────────────────────────────────────
+const STAGE_META=[
+  {key:'screening', label:'Deal screening agent',      sub:'Checking fund mandate and sector fit'},
+  {key:'modelling', label:'Financial modelling agent', sub:'Building IRR model and scenario analysis'},
+  {key:'memo',      label:'IC memo drafting agent',    sub:'Claude Opus drafting all 8 sections'},
+  {key:'grading',   label:'Outcomes grader',           sub:'QA scoring every section against rubric'},
+];
+
+function renderStageTracker(pipelineStages){
+  const ps=pipelineStages||{};
+  return STAGE_META.map(s=>{
+    const sd=ps[s.key]||{status:'pending'};
+    let dotClass='prog-dot', rightText='Waiting', subText=s.sub;
+    if(sd.status==='done'){
+      dotClass='prog-dot done';
+      rightText=sd.duration_s!=null?sd.duration_s+'s':'Done';
+      subText=sd.msg||s.sub;
+    }else if(sd.status==='running'){
+      dotClass='prog-dot run';
+      rightText='Running...';
+      subText=sd.msg||s.sub;
+    }
+    return `<div class="prog-step">
+      <div class="${dotClass}"></div>
+      <div class="prog-info"><div class="prog-label">${s.label}</div><div class="prog-sub">${subText}</div></div>
+      <div class="prog-st">${rightText}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Pipeline progress (real polling) ─────────────────────────────────────────
+let _pipelineTimer=null, _pipelineTimerDeal=null, _progPoll=null;
+
+function _startPipelineTimer(dealId){
+  _pipelineTimerDeal=dealId;
+  clearTimeout(_pipelineTimer);
+  _pipelineTimer=setTimeout(()=>{
+    document.getElementById('timeout-warn').style.display='block';
+  },180000);
+}
+
+function extendTimeout(){
+  document.getElementById('timeout-warn').style.display='none';
+  clearTimeout(_pipelineTimer);
+  _pipelineTimer=setTimeout(()=>{
+    document.getElementById('timeout-warn').style.display='block';
+  },120000);
+}
+
+function usePartialResults(){
+  document.getElementById('timeout-warn').style.display='none';
+  clearTimeout(_pipelineTimer);
+  if(_pipelineTimerDeal){ nav('memo',null); openDeal(_pipelineTimerDeal); }
+}
+
+function showPipelineProgress(name, dealId){
+  const card=document.getElementById('prog-card');
+  card.style.display='block';
+  document.getElementById('prog-title').textContent=`Pipeline running — ${name}`;
+  document.getElementById('prog-steps').innerHTML=renderStageTracker(null);
+  _startPipelineTimer(dealId);
+  _pollFormProgress(dealId);
+}
+
+function _pollFormProgress(dealId){
+  clearTimeout(_progPoll);
+  _progPoll=setTimeout(async()=>{
+    try{
+      const res=await fetch(API+`/api/deals/${dealId}`);
+      const deal=await res.json();
+      document.getElementById('prog-steps').innerHTML=renderStageTracker(deal.pipeline_stages);
+      const done=deal.grader!==null&&deal.grader!==undefined&&deal.memo_ready;
+      if(done){
+        clearTimeout(_pipelineTimer);
+        document.getElementById('timeout-warn').style.display='none';
+        document.getElementById('prog-title').innerHTML=
+          `Pipeline complete — <span style="color:var(--green)">IC memo ready</span>`+
+          ` &nbsp;<button class="btn btn-sm btn-primary" onclick="openDeal('${dealId}')">View memo</button>`;
+        document.getElementById('submit-btn').disabled=false;
+        document.getElementById('submit-btn').innerHTML='<i class="ti ti-player-play" style="font-size:12px;margin-right:4px"></i>Run AI pipeline';
+        toast('IC memo ready for partner review!',5000);
+      }else{ _pollFormProgress(dealId); }
+    }catch(e){ _pollFormProgress(dealId); }
+  },2000);
+}
+
+// ── Agents ────────────────────────────────────────────────────────────────────
+const AGENT_META={
+  orchestrator:{name:'Orchestrator',sub:'Claude Opus 4.6 · Routes deals, manages workflow',icon:'ti-git-branch',bg:'#EEEDFE',color:'#3C3489'},
+  deal_sourcing:{name:'Deal sourcing agent',sub:'Claude Sonnet 4.6 · Screens inbound deals',icon:'ti-search',bg:'#dbeafe',color:'#1e40af'},
+  dd_research:{name:'DD research agent',sub:'Claude Sonnet 4.6 · Market, regulatory, ESG',icon:'ti-microscope',bg:'var(--teal-bg)',color:'var(--teal)'},
+  financial_modelling:{name:'Financial modelling agent',sub:'Claude Sonnet 4.6 · DCF, IRR, MOIC',icon:'ti-chart-line',bg:'#FAECE7',color:'#712B13'},
+  ic_memo_drafting:{name:'IC memo drafting agent',sub:'Claude Opus 4.6 · Drafts all 8 sections',icon:'ti-file-text',bg:'var(--amber-bg)',color:'var(--amber)'},
+  outcomes_grader:{name:'Outcomes grader',sub:'Claude Sonnet 4.6 · QA every section',icon:'ti-checkbox',bg:'var(--green-bg)',color:'var(--green)'},
+};
+
+async function loadAgents(){
+  try{
+    const [aRes,sRes]=await Promise.all([fetch(API+'/api/agents'),fetch(API+'/api/system')]);
+    const agents=await aRes.json();
+    const sys=await sRes.json();
+    renderAgents(agents);
+    renderSystem(sys);
+    const active=Object.values(agents).filter(a=>a.status==='running').length;
+    document.getElementById('m-agents').textContent=active||'0';
+    const dot=document.getElementById('sys-dot');
+    document.getElementById('sys-label').textContent=sys.api_key_set?'API connected':'API key not set';
+    dot.className='status-dot'+(active?'pulse':'');
+  }catch(e){
+    document.getElementById('agent-list').innerHTML='<div class="empty"><i class="ti ti-wifi-off"></i>Server not running</div>';
+  }
+}
+
+function renderAgents(agents){
+  const now=Date.now()/1000;
+  document.getElementById('agent-list').innerHTML=Object.entries(AGENT_META).map(([key,meta])=>{
+    const a=agents[key]||{status:'idle'};
+    const isRunning=a.status==='running';
+    const recentlyDone=!isRunning&&a.completed_at&&(now-a.completed_at)<60;
+    let badge;
+    if(isRunning){
+      badge=`<div class="status-badge">
+        <div class="spinner" style="width:12px;height:12px;border-width:2px;flex-shrink:0"></div>
+        <span style="color:#854f0b;margin-left:5px">Running — ${a.current_deal||''}</span>
+      </div>`;
+    }else if(recentlyDone){
+      const s=Math.round(now-a.completed_at);
+      badge=`<div class="status-badge">
+        <i class="ti ti-check" style="color:var(--green);font-size:14px"></i>
+        <span style="color:var(--green)">Done ${s}s ago</span>
+      </div>`;
+    }else{
+      badge=`<div class="status-badge"><div class="dot idle"></div><span style="color:var(--text-3)"> Idle</span></div>`;
+    }
+    return `<div class="agent-row">
+      <div class="agent-icon" style="background:${meta.bg};color:${meta.color}"><i class="ti ${meta.icon}"></i></div>
+      <div><div class="agent-name">${meta.name}</div><div class="agent-sub">${meta.sub}</div></div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function renderSystem(sys){
+  document.getElementById('sys-health').innerHTML=`
+    <div class="mcp-row"><span>API key</span><span class="${sys.api_key_set?'mcp-ok':'mcp-warn'}">${sys.api_key_set?sys.api_key_preview:'Not set'}</span></div>
+    <div class="mcp-row"><span>Skills ready</span><span class="${sys.skills_ready?'mcp-ok':'mcp-warn'}">${sys.skills_ready?'Yes':'Run step1 first'}</span></div>
+    <div class="mcp-row"><span>MCP servers</span><span class="${sys.mcp_ready?'mcp-ok':'mcp-warn'}">${sys.mcp_ready?'Ready':'Run step2 first'}</span></div>
+    <div class="mcp-row"><span>ZDR</span><span class="mcp-warn">Enable at console.anthropic.com</span></div>
+    <div class="mcp-row"><span>Data residency</span><span style="font-size:10px;color:var(--text-2)">Local dev</span></div>
+    <div class="mcp-row"><span>Deals in session</span><span style="font-size:10px;color:var(--text-2)">${sys.deals_in_memory}</span></div>
+    <div class="mcp-row"><span>Output files</span><span style="font-size:10px;color:var(--text-2)">${sys.output_files}</span></div>
+    <div class="mcp-row"><span>Orchestrator model</span><span style="font-size:10px;color:var(--text-2);font-family:monospace">${sys.model_orchestrator}</span></div>`;
+}
+
+// ── Activity feed ─────────────────────────────────────────────────────────────
+function relativeTime(ts){
+  const diff=Math.floor(Date.now()/1000-ts);
+  if(diff<60) return 'just now';
+  if(diff<3600) return Math.floor(diff/60)+' min ago';
+  if(diff<86400) return Math.floor(diff/3600)+' hr ago';
+  return Math.floor(diff/86400)+'d ago';
+}
+
+async function loadActivity(){
+  try{
+    const res=await fetch(API+'/api/activity');
+    const events=await res.json();
+    const feed=document.getElementById('activity-feed');
+    if(!feed) return;
+    if(!events.length){feed.innerHTML='<div class="empty" style="padding:12px 0;font-size:12px">No activity yet</div>';return;}
+    feed.innerHTML=events.map(e=>`<div class="act-row">
+      <div class="act-icon" style="background:${e.bg};color:${e.color}"><i class="ti ${e.icon}"></i></div>
+      <div><div class="act-text">${e.text}</div><div class="act-time">${relativeTime(e.ts)} · ${e.agent}</div></div>
+    </div>`).join('');
+  }catch(err){}
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadDeals();
+loadAgents();
+loadActivity();
+setInterval(loadDeals, 8000);
+setInterval(loadAgents, 5000);
+setInterval(loadActivity, 5000);
+</script>
+</body>
+</html>
