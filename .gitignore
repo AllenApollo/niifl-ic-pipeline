@@ -5,3 +5,6 @@ __pycache__/
 *.db-wal
 *.db-shm
 outputs/
+node_modules/
+package-lock.json
+package.json
