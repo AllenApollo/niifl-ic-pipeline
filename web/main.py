@@ -290,6 +290,10 @@ class ActivityEvent(BaseModel):
 # ── Demo pipeline runner ──────────────────────────────────────────────────────
 async def run_pipeline_background(deal_id: str, submission: DealSubmission):
     """Runs the demo pipeline (demo_agent.py) in the background."""
+    print(f"[Pipeline] Starting for '{submission.name}'")
+    if deal_id not in DEALS:
+        print(f"[Pipeline] ERROR — {deal_id} not in DEALS. Keys: {list(DEALS.keys())}")
+        return
     deal = DEALS[deal_id]
     hurdle_irr = _HURDLE.get(submission.fund, 12.0)
 
@@ -459,6 +463,7 @@ async def submit_deal(submission: DealSubmission, background_tasks: BackgroundTa
             "grading":   {"status": "pending", "started_at": None, "completed_at": None, "duration_s": None, "msg": ""},
         },
     }
+    print(f"[Deal] Created {deal_id} — total deals: {len(DEALS)}")
     background_tasks.add_task(run_pipeline_background, deal_id, submission)
     return JSONResponse({"deal_id": deal_id, "status": "pipeline_started"})
 
@@ -490,6 +495,7 @@ async def submit_deal_alias(submission: DealSubmission, background_tasks: Backgr
             "grading":   {"status": "pending", "started_at": None, "completed_at": None, "duration_s": None, "msg": ""},
         },
     }
+    print(f"[Deal] Created {deal_id} — total deals: {len(DEALS)}")
     background_tasks.add_task(run_pipeline_background, deal_id, submission)
     return JSONResponse({"deal_id": deal_id, "status": "pipeline_started"})
 
