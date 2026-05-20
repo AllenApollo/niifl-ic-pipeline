@@ -71,7 +71,7 @@ DEALS["DC001"] = {
         "esg_impact": "ESG score 74/100. SDG 9 and 11 aligned. 1,240 direct jobs. INR 18Cr annual GST contribution.",
         "policy_alignment": "Confirmed in NIP (NIP-RD-2024-1823). PM GatiShakti multimodal node designation pending.",
         "deal_structure": "49% equity stake. 2 board seats. Tag/drag/ROFR in SHA. Senior debt INR 1,800Cr at 8.4% p.a.",
-        "recommendation": "INVEST — INR 800 Cr from NIIF Master Fund. Authorise term sheet and exclusivity.",
+        "recommendation": "INVEST — INR 800 Cr from Master Fund. Authorise term sheet and exclusivity.",
     },
     "grader": {"overall_pass": True, "quality_score": 84, "grader_notes": "All 8 sections pass. Minor gap in exit risk section — add secondary buyer universe."},
 }
@@ -92,7 +92,7 @@ DEALS["DC002"] = {
         "esg_impact": "ESG score 81/100. 890MW renewable capacity displacing 680kt CO2/year. SDG 7 and 13 aligned.",
         "policy_alignment": "NIP-EN-2024-0912. PLI solar manufacturing component eligible. PM-KUSUM alignment for rural solar.",
         "deal_structure": "51% equity. 3 board seats. JBIC co-invest 30% on same terms. Anti-dilution ratchet if IRR <12%.",
-        "recommendation": "INVEST — INR 650 Cr from NIIF India-Japan Fund. Proceed to final IC with JBIC confirmation.",
+        "recommendation": "INVEST — INR 650 Cr from India-Japan Fund. Proceed to final IC with JBIC confirmation.",
     },
     "grader": {"overall_pass": True, "quality_score": 76, "grader_notes": "Policy section thin — NMP alignment not stated. ESG good. Recommend adding JBIC environmental checklist."},
 }

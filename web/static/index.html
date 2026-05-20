@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NIIFL AI Engine</title>
+<title>AI Engine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" rel="stylesheet">
@@ -213,7 +213,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0}
 <div class="topbar">
   <div class="logo">
     <div class="logo-mark"><svg viewBox="0 0 12 12"><rect x="1" y="1" width="4" height="4" rx="1"/><rect x="7" y="1" width="4" height="4" rx="1"/><rect x="1" y="7" width="4" height="4" rx="1"/><rect x="7" y="7" width="4" height="4" rx="1" opacity=".4"/></svg></div>
-    NIIFL AI Engine
+    AI Engine
   </div>
   <nav class="topbar-nav">
     <button class="tn active" onclick="nav('pipeline',this)"><i class="ti ti-layout-dashboard" style="font-size:12px;margin-right:3px"></i>Pipeline</button>
@@ -287,7 +287,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0}
           <div class="fg"><label>Company name</label><input id="f-name" type="text" placeholder="e.g. Greenway Highways Ltd"></div>
           <div class="fg"><label>Fund</label>
             <select id="f-fund">
-              <option value="master_fund">NIIF Master Fund</option>
+              <option value="master_fund">Master Fund</option>
               <option value="strategic_opportunities_fund">Strategic Opportunities Fund</option>
               <option value="india_japan_fund">India-Japan Fund</option>
               <option value="private_markets_fund">Private Markets Fund</option>
@@ -314,7 +314,7 @@ hr{border:none;border-top:1px solid var(--border);margin:12px 0}
           <div class="fg"><label>Entry EV (INR Cr)</label><input id="f-ev" type="number" placeholder="4200"></div>
           <div class="fg"><label>Deal lead</label><input id="f-lead" type="text" placeholder="Your name"></div>
         </div>
-        <div class="fg"><label>Deal brief / CIM summary</label><textarea id="f-brief" placeholder="Paste a summary of the company, the deal structure, and why it is being considered for NIIFL. Include sector, asset type, concession terms if applicable, key financials, and any Japan nexus for IJF deals."></textarea></div>
+        <div class="fg"><label>Deal brief / CIM summary</label><textarea id="f-brief" placeholder="Paste a summary of the company, the deal structure, and why it is being considered. Include sector, asset type, concession terms if applicable, key financials, and any Japan nexus for IJF deals."></textarea></div>
 
         <div class="section-title">Historical financials (INR Cr)</div>
         <div class="form-row col3">
@@ -616,7 +616,7 @@ function renderMemo(data){
   </div>`;
 }
 
-function fundLabel(f){return{master_fund:'NIIF Master Fund',strategic_opportunities_fund:'SOF',india_japan_fund:'India-Japan Fund',private_markets_fund:'Private Markets Fund'}[f]||f;}
+function fundLabel(f){return{master_fund:'Master Fund',strategic_opportunities_fund:'SOF',india_japan_fund:'India-Japan Fund',private_markets_fund:'Private Markets Fund'}[f]||f;}
 
 async function downloadMemo(){
   if(!currentDealId){toast('No deal selected');return;}
