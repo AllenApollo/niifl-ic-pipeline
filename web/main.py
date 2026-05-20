@@ -1,31 +1,27 @@
 """
-NIIFL AI Engine — FastAPI Backend
-===================================
-Runs the web server that the investment team uses.
+NIIFL AI Engine — FastAPI Backend (Demo Mode)
+=============================================
+Entry point for Render deployment.
 
-Start with:
-    python3 web/main.py
+Render start command: uvicorn web.main:app --host 0.0.0.0 --port $PORT
 
-Then open: http://localhost:8000
-
-All pipeline steps (agents, orchestrator, memo formatter) are
-called from here as async background tasks so the UI stays
-responsive while agents run.
+Pipeline uses demo_agent.py (parallel Sonnet section drafting).
+Demo deals are seeded from demo_data.py at startup.
+Completed pipeline deals are persisted to outputs/completed_deals.json.
 """
 
 import os
 import sys
 import json
-import uuid
 import time
 import asyncio
 import datetime
 from pathlib import Path
 from typing import Optional
 
-# ── Path setup so we can import from parent directory ────────────────────────
-WEB_DIR    = Path(__file__).parent
-ROOT_DIR   = WEB_DIR.parent
+# ── Path setup ────────────────────────────────────────────────────────────────
+WEB_DIR  = Path(__file__).parent
+ROOT_DIR = WEB_DIR.parent
 sys.path.insert(0, str(ROOT_DIR))
 sys.path.insert(0, str(ROOT_DIR / "config"))
 sys.path.insert(0, str(ROOT_DIR / "mcp_servers"))
@@ -36,16 +32,207 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# ── In-memory deal store (replace with DB in production) ─────────────────────
-# Structure: { deal_id: { ...deal_data, status, memo, grader } }
+# ── Demo data ─────────────────────────────────────────────────────────────────
+from demo_data import DEMO_DEALS
+
+# ── Persistence paths ─────────────────────────────────────────────────────────
+OUTPUTS_DIR          = ROOT_DIR / "outputs"
+OUTPUTS_DIR.mkdir(exist_ok=True)
+COMPLETED_DEALS_FILE = OUTPUTS_DIR / "completed_deals.json"
+
+_DEAL_DOCX_NAMES = {
+    "DC001": "GHL_IC_Memo.docx",
+    "DC002": "SunGrid_IC_Memo.docx",
+    "DC003": "IndiaStack_IC_Memo.docx",
+    "DC004": "Sunrise_IC_Memo.docx",
+}
+
+_HURDLE = {
+    "master_fund":                  12.0,
+    "india_japan_fund":             14.0,
+    "strategic_opportunities_fund": 15.0,
+    "private_markets_fund":         12.0,
+}
+
+# ── DOCX builder ──────────────────────────────────────────────────────────────
+def _build_docx(deal_id: str, deal: dict, out_path: str) -> str:
+    from docx import Document
+    from docx.shared import Pt, RGBColor, Cm
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+
+    FUND_DISPLAY = {
+        "master_fund":                  "Master Fund",
+        "strategic_opportunities_fund": "Strategic Opportunities Fund",
+        "private_markets_fund":         "Private Markets Fund",
+        "india_japan_fund":             "India-Japan Fund",
+    }
+    NAVY = RGBColor(0x1F, 0x38, 0x64)
+    BLUE = RGBColor(0x2E, 0x74, 0xB5)
+    RED  = RGBColor(0xC0, 0x00, 0x00)
+    GREY = RGBColor(0x59, 0x59, 0x59)
+
+    memo   = deal.get("memo_sections") or {}
+    grader = deal.get("grader") or {}
+    score  = grader.get("quality_score", 0)
+    fund   = FUND_DISPLAY.get(deal.get("fund", ""), deal.get("fund", ""))
+    name   = deal.get("name", "")
+    today  = datetime.date.today().strftime("%d %B %Y")
+
+    SECTIONS = [
+        ("1. Investment Thesis",             "thesis"),
+        ("2. Market & Competitive Position", "market_analysis"),
+        ("3. Financial Returns",             "financial_returns"),
+        ("4. Key Risks & Mitigants",         "risks_mitigants"),
+        ("5. ESG & Impact",                  "esg_impact"),
+        ("6. Policy Alignment",              "policy_alignment"),
+        ("7. Deal Structure & Terms",        "deal_structure"),
+        ("8. Recommendation",               "recommendation"),
+    ]
+
+    doc = Document()
+    for sec in doc.sections:
+        sec.top_margin = sec.bottom_margin = Cm(2.0)
+        sec.left_margin = sec.right_margin = Cm(2.5)
+
+    def _font(run, size=11, bold=False, color=None, italic=False):
+        run.font.name   = "Arial"
+        run.font.size   = Pt(size)
+        run.font.bold   = bold
+        run.font.italic = italic
+        if color:
+            run.font.color.rgb = color
+
+    def add_heading(text, level=1):
+        p   = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(14 if level == 1 else 10)
+        p.paragraph_format.space_after  = Pt(4)
+        run = p.add_run(text)
+        _font(run, size=14 if level == 1 else 12, bold=True,
+              color=NAVY if level == 1 else BLUE)
+        return p
+
+    def add_body(text):
+        p   = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after  = Pt(6)
+        run = p.add_run(str(text) if text else "[To be completed]")
+        _font(run, size=10)
+        return p
+
+    def add_kv(label, value):
+        p  = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(2)
+        r1 = p.add_run(f"{label}: ")
+        _font(r1, size=10, bold=True)
+        r2 = p.add_run(str(value) if value is not None else "—")
+        _font(r2, size=10)
+        return p
+
+    def add_divider():
+        p   = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after  = Pt(4)
+        pPr = p._p.get_or_add_pPr()
+        pBdr = OxmlElement("w:pBdr")
+        bot  = OxmlElement("w:bottom")
+        bot.set(qn("w:val"), "single")
+        bot.set(qn("w:sz"), "6")
+        bot.set(qn("w:space"), "1")
+        bot.set(qn("w:color"), "2E74B5")
+        pBdr.append(bot)
+        pPr.append(pBdr)
+        return p
+
+    p = doc.add_paragraph()
+    _font(p.add_run("CONFIDENTIAL"), size=10, bold=True, color=RED)
+
+    p = doc.add_paragraph()
+    _font(p.add_run("Investment Committee Memorandum"), size=22, bold=True, color=NAVY)
+    p.paragraph_format.space_after = Pt(6)
+
+    add_divider()
+    add_kv("Company",          name)
+    add_kv("Fund",             fund)
+    add_kv("Deal ID",          deal_id)
+    add_kv("Date",             today)
+    add_kv("AI Quality Score", f"{score}/100")
+    add_kv("Base IRR",         f"{deal.get('irr_base', '—')}%")
+    add_kv("Base MOIC",        f"{deal.get('moic', '—')}x")
+    doc.add_page_break()
+
+    for heading, key in SECTIONS:
+        add_heading(heading, level=1)
+        add_body(memo.get(key, ""))
+        add_divider()
+
+    add_heading("Returns Summary", level=2)
+    tbl = doc.add_table(rows=4, cols=3)
+    tbl.style = "Table Grid"
+    for i, h in enumerate(["Scenario", "Gross IRR", "MOIC"]):
+        cell = tbl.rows[0].cells[i]
+        cell.text = h
+        cell.paragraphs[0].runs[0].font.bold = True
+    for r_idx, (s, irr, moic) in enumerate([
+        ("Base case", f"{deal.get('irr_base','—')}%", f"{deal.get('moic','—')}x"),
+        ("Bull case", f"{deal.get('irr_bull','—')}%", "—"),
+        ("Bear case", f"{deal.get('irr_bear','—')}%", "—"),
+    ], start=1):
+        for c_idx, val in enumerate([s, irr, moic]):
+            tbl.rows[r_idx].cells[c_idx].text = val
+    doc.add_paragraph()
+
+    add_heading("Appendix — AI Quality Assurance", level=1)
+    add_kv("Overall Pass",  grader.get("overall_pass", False))
+    add_kv("Quality Score", f"{score}/100")
+    add_kv("Grader Notes",  grader.get("grader_notes", ""))
+    p = doc.add_paragraph()
+    p.paragraph_format.space_before = Pt(16)
+    _font(p.add_run(
+        "— This memo was drafted by the AI engine and reviewed by a qualified "
+        "investment professional before IC presentation. —"
+    ), size=8, italic=True, color=GREY)
+
+    doc.save(out_path)
+    return out_path
+
+
+# ── Deal persistence ──────────────────────────────────────────────────────────
+def _save_completed_deal(deal_id: str, deal: dict):
+    try:
+        existing = {}
+        if COMPLETED_DEALS_FILE.exists():
+            with open(COMPLETED_DEALS_FILE, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+        existing[deal_id] = {k: v for k, v in deal.items()
+                             if isinstance(v, (str, int, float, bool, dict, list, type(None)))}
+        with open(COMPLETED_DEALS_FILE, "w", encoding="utf-8") as f:
+            json.dump(existing, f, indent=2, default=str, ensure_ascii=False)
+        print(f"[Pipeline] Saved {deal_id} to completed_deals.json")
+    except Exception as e:
+        print(f"[Pipeline] Could not save deal: {e}")
+
+
+def _load_completed_deals() -> dict:
+    if not COMPLETED_DEALS_FILE.exists():
+        return {}
+    try:
+        with open(COMPLETED_DEALS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[Startup] Could not load completed_deals.json: {e}")
+        return {}
+
+
+# ── In-memory stores ──────────────────────────────────────────────────────────
 DEALS: dict = {}
 AGENT_STATUS: dict = {
-    "orchestrator":         {"status": "idle", "current_deal": None, "completed_at": None},
-    "deal_sourcing":        {"status": "idle", "current_deal": None, "completed_at": None},
-    "dd_research":          {"status": "idle", "current_deal": None, "completed_at": None},
-    "financial_modelling":  {"status": "idle", "current_deal": None, "completed_at": None},
-    "ic_memo_drafting":     {"status": "idle", "current_deal": None, "completed_at": None},
-    "outcomes_grader":      {"status": "idle", "current_deal": None, "completed_at": None},
+    "orchestrator":        {"status": "idle", "current_deal": None, "completed_at": None},
+    "deal_sourcing":       {"status": "idle", "current_deal": None, "completed_at": None},
+    "dd_research":         {"status": "idle", "current_deal": None, "completed_at": None},
+    "financial_modelling": {"status": "idle", "current_deal": None, "completed_at": None},
+    "ic_memo_drafting":    {"status": "idle", "current_deal": None, "completed_at": None},
+    "outcomes_grader":     {"status": "idle", "current_deal": None, "completed_at": None},
 }
 ACTIVITY_LOG: list = [
     {"type": "grading",   "text": "IC memo ready — Greenway Highways passed QA (84/100). Partner review required.", "icon": "ti-check",     "bg": "var(--green-bg)",  "color": "var(--green)",  "agent": "Outcomes grader",           "ts": time.time() - 120},
@@ -53,66 +240,23 @@ ACTIVITY_LOG: list = [
     {"type": "modelling", "text": "Model complete — SunGrid base IRR 14.8% vs 14% IJF hurdle.",                     "icon": "ti-chart-bar", "bg": "#dbeafe",          "color": "#1e40af",       "agent": "Financial modelling agent", "ts": time.time() - 2040},
 ]
 
-# ── Seed demo deals so the UI isn't empty on first load ──────────────────────
-DEALS["DC001"] = {
-    "deal_id": "DC001", "name": "Greenway Highways Ltd",
-    "sector": "roads", "fund": "master_fund", "ticket_cr": 800,
-    "stake_pct": 49, "entry_ev_cr": 4200, "deal_lead": "Rajiv Sharma",
-    "status": "partner_review", "quality_score": 84,
-    "irr_base": 13.2, "moic": 2.1,
-    "submitted_at": "2026-05-05T09:14:00",
-    "brief": "280km NH-48 tolled highway under 30-yr NHAI concession.",
-    "memo_ready": True,
-    "memo_sections": {
-        "thesis": "Greenway Highways offers high-quality exposure to India's tolled road infrastructure with 22 years concession remaining and resilient WPI-linked revenue.",
-        "market_analysis": "NH-48 corridor serves the Bengaluru–Chennai industrial belt. Traffic CAGR 7.8% over 5 years; NHAI ATVM data confirms consistent growth.",
-        "financial_returns": "Base IRR 13.2% vs 12.0% hurdle. MOIC 2.1x. Bull 16.8%, Bear 10.1%. Entry 14.2x EV/EBITDA.",
-        "risks_mitigants": "Traffic risk: mitigated by diversified vehicle mix and growing corridor demand. Regulatory: NHAI step-in rights intact.",
-        "esg_impact": "ESG score 74/100. SDG 9 and 11 aligned. 1,240 direct jobs. INR 18Cr annual GST contribution.",
-        "policy_alignment": "Confirmed in NIP (NIP-RD-2024-1823). PM GatiShakti multimodal node designation pending.",
-        "deal_structure": "49% equity stake. 2 board seats. Tag/drag/ROFR in SHA. Senior debt INR 1,800Cr at 8.4% p.a.",
-        "recommendation": "INVEST — INR 800 Cr from Master Fund. Authorise term sheet and exclusivity.",
-    },
-    "grader": {"overall_pass": True, "quality_score": 84, "grader_notes": "All 8 sections pass. Minor gap in exit risk section — add secondary buyer universe."},
-}
-DEALS["DC002"] = {
-    "deal_id": "DC002", "name": "SunGrid Renewables Pvt Ltd",
-    "sector": "energy", "fund": "india_japan_fund", "ticket_cr": 650,
-    "stake_pct": 51, "entry_ev_cr": 3800, "deal_lead": "Priya Nair",
-    "status": "ic_prep", "quality_score": 76,
-    "irr_base": 14.8, "moic": 2.3,
-    "submitted_at": "2026-05-06T11:30:00",
-    "brief": "5GW solar platform with Nippon Electric as Japan technology partner.",
-    "memo_ready": True,
-    "memo_sections": {
-        "thesis": "SunGrid is India's fastest-growing utility-scale solar platform, offering IJF exposure to clean energy with a credible Japanese technology partnership.",
-        "market_analysis": "Indian solar market 203GW installed; SunGrid holds 2.4% share. PPA-backed revenue provides visibility.",
-        "financial_returns": "Base IRR 14.8% vs 14.0% IJF hurdle. MOIC 2.3x. Cross-currency hedge adds 40bps net IRR.",
-        "risks_mitigants": "DISCOM payment risk: mitigated by payment security mechanism and letter of credit. Grid curtailment: <3% historically.",
-        "esg_impact": "ESG score 81/100. 890MW renewable capacity displacing 680kt CO2/year. SDG 7 and 13 aligned.",
-        "policy_alignment": "NIP-EN-2024-0912. PLI solar manufacturing component eligible. PM-KUSUM alignment for rural solar.",
-        "deal_structure": "51% equity. 3 board seats. JBIC co-invest 30% on same terms. Anti-dilution ratchet if IRR <12%.",
-        "recommendation": "INVEST — INR 650 Cr from India-Japan Fund. Proceed to final IC with JBIC confirmation.",
-    },
-    "grader": {"overall_pass": True, "quality_score": 76, "grader_notes": "Policy section thin — NMP alignment not stated. ESG good. Recommend adding JBIC environmental checklist."},
-}
-DEALS["DC003"] = {
-    "deal_id": "DC003", "name": "IndiaStack Digital Infra",
-    "sector": "digital_infra", "fund": "strategic_opportunities_fund", "ticket_cr": 320,
-    "stake_pct": 35, "entry_ev_cr": 1800, "deal_lead": "Amit Verma",
-    "status": "dd", "quality_score": None,
-    "submitted_at": "2026-05-07T08:00:00",
-    "brief": "B2B digital infrastructure SaaS platform serving 400+ enterprise clients.",
-    "memo_ready": False, "memo_sections": {}, "grader": None,
-}
+# Seed with demo deals
+DEALS.update(DEMO_DEALS)
 
+# Restore any completed pipeline deals from previous sessions
+_completed = _load_completed_deals()
+for _did, _deal in _completed.items():
+    if _deal.get("docx_path") and not Path(_deal["docx_path"]).exists():
+        _deal["docx_ready"] = False
+    DEALS[_did] = _deal
+    print(f"[Startup] Restored {_did} ({_deal.get('name','?')}) — score {_deal.get('quality_score','?')}/100")
+
+# ── FastAPI app ───────────────────────────────────────────────────────────────
 app = FastAPI(title="NIIFL AI Engine", version="1.0.0")
-
 app.add_middleware(CORSMiddleware,
     allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-
-# Serve static files
 app.mount("/static", StaticFiles(directory=str(WEB_DIR / "static")), name="static")
+
 
 # ── Request models ────────────────────────────────────────────────────────────
 class DealSubmission(BaseModel):
@@ -130,134 +274,148 @@ class DealSubmission(BaseModel):
     ebitda_fy22:  Optional[float] = 0
     ebitda_fy23:  Optional[float] = 0
     ebitda_fy24:  Optional[float] = 0
-    net_debt_fy24: Optional[float] = 0
+    net_debt_fy24:  Optional[float] = 0
     net_worth_fy24: Optional[float] = 0
 
 class ActivityEvent(BaseModel):
     type: str
     text: str
-    icon: Optional[str] = "ti-check"
-    bg: Optional[str] = "var(--green-bg)"
+    icon:  Optional[str] = "ti-check"
+    bg:    Optional[str] = "var(--green-bg)"
     color: Optional[str] = "var(--green)"
     agent: Optional[str] = ""
 
-# ── Background pipeline runner ────────────────────────────────────────────────
+
+# ── Demo pipeline runner ──────────────────────────────────────────────────────
 async def run_pipeline_background(deal_id: str, submission: DealSubmission):
-    """Runs the full AI pipeline in the background. Updates DEALS[deal_id] as stages complete."""
+    """Runs the demo pipeline (demo_agent.py) in the background."""
     deal = DEALS[deal_id]
+    hurdle_irr = _HURDLE.get(submission.fund, 12.0)
+
+    for agent in AGENT_STATUS:
+        AGENT_STATUS[agent]["status"] = "idle"
+        AGENT_STATUS[agent]["completed_at"] = None
     AGENT_STATUS["orchestrator"]["status"] = "running"
     AGENT_STATUS["orchestrator"]["current_deal"] = deal["name"]
+    AGENT_STATUS["deal_sourcing"]["status"] = "running"
+    AGENT_STATUS["deal_sourcing"]["current_deal"] = deal["name"]
+    AGENT_STATUS["deal_sourcing"]["completed_at"] = None
+    deal["status"] = "screening"
+
+    async def update_progress(stage: str, pct: int, msg: str = ""):
+        _stage_map = {
+            "screening": "deal_sourcing",
+            "modelling": "financial_modelling",
+            "memo":      "ic_memo_drafting",
+            "grading":   "outcomes_grader",
+        }
+        agent_key = _stage_map.get(stage, stage)
+
+        if "pipeline_stages" not in deal:
+            deal["pipeline_stages"] = {}
+        ps = deal["pipeline_stages"]
+        if stage not in ps:
+            ps[stage] = {"status": "pending", "started_at": None,
+                         "completed_at": None, "duration_s": None, "msg": ""}
+        ps[stage]["msg"] = msg
+
+        if pct < 100:
+            if ps[stage]["status"] != "running":
+                ps[stage]["status"] = "running"
+                ps[stage]["started_at"] = time.time()
+            AGENT_STATUS[agent_key]["status"] = "running"
+            AGENT_STATUS[agent_key]["current_deal"] = deal["name"]
+            AGENT_STATUS[agent_key]["completed_at"] = None
+            deal["status"] = {
+                "screening": "screening",
+                "modelling": "dd",
+                "memo":      "ic_prep",
+                "grading":   "ic_prep",
+            }.get(stage, deal["status"])
+        else:
+            _now = time.time()
+            ps[stage]["status"] = "done"
+            ps[stage]["completed_at"] = _now
+            if ps[stage].get("started_at"):
+                ps[stage]["duration_s"] = round(_now - ps[stage]["started_at"], 1)
+            AGENT_STATUS[agent_key]["status"] = "idle"
+            AGENT_STATUS[agent_key]["current_deal"] = None
+            AGENT_STATUS[agent_key]["completed_at"] = _now
+            _ACT = {
+                "screening": ("ti-search",    "var(--blue-bg)",   "var(--blue)",   "Deal sourcing agent"),
+                "modelling": ("ti-chart-bar", "#dbeafe",          "#1e40af",       "Financial modelling agent"),
+                "memo":      ("ti-file-text", "var(--purple-bg)", "var(--purple)", "IC memo agent"),
+                "grading":   ("ti-check",     "var(--green-bg)",  "var(--green)",  "Outcomes grader"),
+            }
+            if stage in _ACT:
+                icon, bg, color, agent_label = _ACT[stage]
+                if stage == "screening":
+                    act_text = f"Deal screened — {deal['name']} passed initial screening"
+                elif stage == "modelling":
+                    irr_str = msg.split("Base IRR ")[-1] if "Base IRR" in msg else "?"
+                    act_text = f"Model complete — {deal['name']} base IRR {irr_str} vs {hurdle_irr}% hurdle"
+                elif stage == "memo":
+                    act_text = f"Memo drafted — {deal['name']} 8-section memo complete"
+                else:
+                    score_str = msg.split("score ")[-1] if "score" in msg else "?"
+                    act_text = f"IC memo ready — {deal['name']} passed QA ({score_str}). Partner review required."
+                ACTIVITY_LOG.append({
+                    "type": stage, "text": act_text,
+                    "icon": icon, "bg": bg, "color": color,
+                    "agent": agent_label, "ts": _now,
+                })
 
     try:
-        # Stage 1: Screening
-        deal["status"] = "screening"
-        AGENT_STATUS["deal_sourcing"]["status"] = "running"
-        AGENT_STATUS["deal_sourcing"]["current_deal"] = deal["name"]
-        await asyncio.sleep(0.1)  # yield to event loop
-
-        from step3_build_agents import DealSourcingAgent
-        sourcing = DealSourcingAgent()
-        screen = sourcing.run(submission.brief)
-        AGENT_STATUS["deal_sourcing"]["status"] = "idle"
-
-        if not screen.get("pass_screen"):
-            deal["status"] = "rejected"
-            deal["reject_reason"] = screen.get("reject_reason", "Did not pass AI screen")
-            return
-
-        # Stage 2: DD Research
-        deal["status"] = "dd"
-        AGENT_STATUS["dd_research"]["status"] = "running"
-        AGENT_STATUS["dd_research"]["current_deal"] = deal["name"]
-
-        from step3_build_agents import DDResearchAgent
-        dd = DDResearchAgent()
-        dd_result = dd.run(
-            deal_name=submission.name,
-            deal_brief=submission.brief,
-            sector=submission.sector,
-            fund=submission.fund,
-        )
-        deal["dd_result"] = dd_result
-        AGENT_STATUS["dd_research"]["status"] = "idle"
-
-        # Stage 3: Financial Modelling
-        AGENT_STATUS["financial_modelling"]["status"] = "running"
-        AGENT_STATUS["financial_modelling"]["current_deal"] = deal["name"]
-
-        from step3_build_agents import FinancialModellingAgent
-        modelling = FinancialModellingAgent()
+        from demo_agent import run_demo_pipeline
         financials = {
             "revenue_cr": {"FY22": submission.revenue_fy22, "FY23": submission.revenue_fy23, "FY24": submission.revenue_fy24},
             "ebitda_cr":  {"FY22": submission.ebitda_fy22,  "FY23": submission.ebitda_fy23,  "FY24": submission.ebitda_fy24},
-            "net_debt_cr": {"FY24": submission.net_debt_fy24},
-            "net_worth_cr": {"FY24": submission.net_worth_fy24},
         }
-        deal_terms = {
-            "sector": submission.sector, "ticket_cr": submission.ticket_cr,
-            "stake_pct": submission.stake_pct, "entry_ev_cr": submission.entry_ev_cr,
-        }
-        model_result = modelling.run(submission.name, submission.sector, submission.fund, financials, deal_terms)
-        deal["model_result"] = model_result
-        deal["irr_base"] = model_result.get("base_irr")
-        deal["moic"] = model_result.get("base_moic")
-        AGENT_STATUS["financial_modelling"]["status"] = "idle"
+        result = await run_demo_pipeline(
+            deal_name=submission.name,
+            fund=submission.fund,
+            sector=submission.sector,
+            ticket_cr=submission.ticket_cr,
+            stake_pct=submission.stake_pct,
+            entry_ev_cr=submission.entry_ev_cr,
+            brief=submission.brief,
+            financials=financials,
+            progress_callback=update_progress,
+        )
 
-        # Stage 4: IC Memo
-        deal["status"] = "ic_prep"
-        AGENT_STATUS["ic_memo_drafting"]["status"] = "running"
-        AGENT_STATUS["ic_memo_drafting"]["current_deal"] = deal["name"]
+        deal["memo_sections"] = result.get("memo_sections", {})
+        deal["grader"]        = result.get("grader")
+        deal["quality_score"] = result.get("quality_score")
+        deal["irr_base"]      = result.get("irr_base")
+        deal["irr_bull"]      = result.get("irr_bull")
+        deal["irr_bear"]      = result.get("irr_bear")
+        deal["irr_net"]       = result.get("irr_net")
+        deal["moic"]          = result.get("moic")
+        deal["memo_ready"]    = bool(deal.get("memo_sections"))
+        deal["status"]        = "partner_review" if (result.get("grader") or {}).get("overall_pass") else "ic_prep"
 
-        from step3_build_agents import ICMemoDraftingAgent, OutcomesGraderAgent
-        memo_agent = ICMemoDraftingAgent()
-        grader_agent = OutcomesGraderAgent()
-
-        memo_sections = None
-        grader_result = None
-        for attempt in range(3):
-            memo_sections = memo_agent.run(
-                deal_name=submission.name, fund=submission.fund,
-                dd_research=dd_result, financial_model=model_result,
-                deal_terms=deal_terms,
-            )
-            AGENT_STATUS["ic_memo_drafting"]["status"] = "idle"
-            AGENT_STATUS["outcomes_grader"]["status"] = "running"
-            grader_result = grader_agent.run(memo_sections, submission.fund)
-            AGENT_STATUS["outcomes_grader"]["status"] = "idle"
-            if grader_result.get("overall_pass"):
-                break
-
-        deal["memo_sections"] = memo_sections if not isinstance(memo_sections, dict) or not memo_sections.get("parse_error") else {}
-        deal["memo_ready"] = bool(grader_result and grader_result.get("overall_pass"))
-        deal["grader"] = grader_result
-        deal["quality_score"] = grader_result.get("quality_score") if grader_result else None
-
-        # Stage 5: DOCX
-        deal["status"] = "partner_review" if deal["memo_ready"] else "needs_manual_review"
         try:
-            from step5_format_memo import generate_memo_docx
-            full_output = {
-                "deal_id": deal_id, "deal_name": submission.name,
-                "fund": submission.fund, "ic_memo_sections": memo_sections,
-                "financial_model": model_result, "grader_result": grader_result,
-            }
-            docx_path = generate_memo_docx(full_output)
-            deal["docx_path"] = str(docx_path)
+            filename = _DEAL_DOCX_NAMES.get(deal_id, f"{deal_id}_IC_Memo.docx")
+            out_path = str(OUTPUTS_DIR / filename)
+            _build_docx(deal_id, deal, out_path)
+            deal["docx_path"]  = out_path
+            deal["docx_ready"] = True
+            print(f"[Pipeline] DOCX written: {filename}")
         except Exception as e:
             deal["docx_error"] = str(e)
+            print(f"[Pipeline] DOCX generation failed: {e}")
 
-        # Save JSON output
-        out = ROOT_DIR / "outputs" / f"{deal_id}_result.json"
-        out.parent.mkdir(exist_ok=True)
-        with open(out, "w") as f:
-            json.dump({k: v for k, v in deal.items() if isinstance(v, (str, int, float, bool, dict, list, type(None)))}, f, indent=2, default=str)
+        _save_completed_deal(deal_id, deal)
 
     except Exception as e:
         deal["status"] = "error"
-        deal["error"] = str(e)
+        deal["error"]  = str(e)
+        print(f"[Pipeline] ERROR for '{submission.name}': {e}")
     finally:
         AGENT_STATUS["orchestrator"]["status"] = "idle"
         AGENT_STATUS["orchestrator"]["current_deal"] = None
+        AGENT_STATUS["orchestrator"]["completed_at"] = time.time()
+
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -334,15 +492,17 @@ async def download_memo(deal_id: str):
     d = DEALS[deal_id]
     docx_path = d.get("docx_path")
     if not docx_path or not Path(docx_path).exists():
-        # Try finding it in outputs
-        name = d["name"].replace(" ", "_")
-        candidate = ROOT_DIR / "outputs" / f"{deal_id}_IC_Memo.docx"
+        filename  = _DEAL_DOCX_NAMES.get(deal_id, f"{deal_id}_IC_Memo.docx")
+        candidate = OUTPUTS_DIR / filename
         if candidate.exists():
             docx_path = str(candidate)
         else:
             raise HTTPException(404, "DOCX not yet generated — wait for pipeline to complete")
-    return FileResponse(docx_path, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        filename=f"IC_Memo_{d['name'].replace(' ','_')}.docx")
+    return FileResponse(
+        docx_path,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename=f"IC_Memo_{d['name'].replace(' ','_')}.docx",
+    )
 
 @app.get("/api/agents")
 async def get_agents():
@@ -359,32 +519,34 @@ async def add_activity(event: ActivityEvent):
 
 @app.get("/api/system")
 async def system_health():
-    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    api_key   = os.getenv("ANTHROPIC_API_KEY", "")
     skills_ok = (ROOT_DIR / "skills" / "skill_fund_mandate.txt").exists()
-    mcp_ok = (ROOT_DIR / "mcp_servers" / "mcp_dealcloud.py").exists()
-    outputs = list((ROOT_DIR / "outputs").glob("*.json")) if (ROOT_DIR / "outputs").exists() else []
+    mcp_ok    = (ROOT_DIR / "mcp_servers" / "mcp_dealcloud.py").exists()
+    outputs   = list(OUTPUTS_DIR.glob("*.json")) if OUTPUTS_DIR.exists() else []
     return JSONResponse({
-        "api_key_set": bool(api_key) and api_key != "YOUR_API_KEY_HERE",
+        "api_key_set":     bool(api_key) and api_key != "YOUR_API_KEY_HERE",
         "api_key_preview": f"{api_key[:12]}...{api_key[-4:]}" if len(api_key) > 16 else "not set",
-        "skills_ready": skills_ok,
-        "mcp_ready": mcp_ok,
-        "zdr_note": "Enable ZDR at console.anthropic.com/settings",
-        "data_residency": "Local — configure Azure Central India for production",
+        "skills_ready":    skills_ok,
+        "mcp_ready":       mcp_ok,
+        "zdr_note":        "Enable ZDR at console.anthropic.com/settings",
+        "data_residency":  "Local — configure Azure Central India for production",
         "deals_in_memory": len(DEALS),
-        "output_files": len(outputs),
+        "output_files":    len(outputs),
         "model_orchestrator": "claude-opus-4-6",
-        "model_subagent": "claude-sonnet-4-6",
+        "model_subagent":     "claude-sonnet-4-6",
     })
 
 @app.get("/api/outputs")
 async def list_outputs():
-    out_dir = ROOT_DIR / "outputs"
-    if not out_dir.exists():
+    if not OUTPUTS_DIR.exists():
         return JSONResponse([])
     files = []
-    for f in sorted(out_dir.iterdir()):
-        files.append({"name": f.name, "size_kb": round(f.stat().st_size / 1024, 1),
-                      "modified": datetime.datetime.fromtimestamp(f.stat().st_mtime).isoformat()})
+    for f in sorted(OUTPUTS_DIR.iterdir()):
+        files.append({
+            "name":     f.name,
+            "size_kb":  round(f.stat().st_size / 1024, 1),
+            "modified": datetime.datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+        })
     return JSONResponse(files)
 
 # ── Start server ──────────────────────────────────────────────────────────────
@@ -392,7 +554,7 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
     print(f"\n{'='*50}")
-    print(f"  NIIFL AI Engine — Web Server")
+    print(f"  AI Engine — Web Server")
     print(f"  Open: http://localhost:{port}")
     print(f"  API docs: http://localhost:{port}/docs")
     print(f"{'='*50}\n")
