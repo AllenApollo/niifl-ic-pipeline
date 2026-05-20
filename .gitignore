@@ -8,3 +8,5 @@ outputs/
 node_modules/
 package-lock.json
 package.json
+demo/.env
+demo/__pycache__/

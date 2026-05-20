@@ -22,6 +22,7 @@ from typing import Optional
 # ── Path setup ────────────────────────────────────────────────────────────────
 WEB_DIR  = Path(__file__).parent
 ROOT_DIR = WEB_DIR.parent
+sys.path.insert(0, str(ROOT_DIR / "demo"))   # demo_agent.py, demo_data.py, demo_runner.py
 sys.path.insert(0, str(ROOT_DIR))
 sys.path.insert(0, str(ROOT_DIR / "config"))
 sys.path.insert(0, str(ROOT_DIR / "mcp_servers"))
@@ -432,6 +433,37 @@ async def list_deals():
 
 @app.post("/api/deals")
 async def submit_deal(submission: DealSubmission, background_tasks: BackgroundTasks):
+    deal_id = f"DC{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+    DEALS[deal_id] = {
+        "deal_id": deal_id,
+        "name": submission.name,
+        "fund": submission.fund,
+        "sector": submission.sector,
+        "ticket_cr": submission.ticket_cr,
+        "stake_pct": submission.stake_pct,
+        "entry_ev_cr": submission.entry_ev_cr,
+        "deal_lead": submission.deal_lead,
+        "brief": submission.brief,
+        "status": "queued",
+        "quality_score": None,
+        "irr_base": None,
+        "moic": None,
+        "memo_ready": False,
+        "memo_sections": {},
+        "grader": None,
+        "submitted_at": datetime.datetime.now().isoformat(),
+        "pipeline_stages": {
+            "screening": {"status": "pending", "started_at": None, "completed_at": None, "duration_s": None, "msg": ""},
+            "modelling": {"status": "pending", "started_at": None, "completed_at": None, "duration_s": None, "msg": ""},
+            "memo":      {"status": "pending", "started_at": None, "completed_at": None, "duration_s": None, "msg": ""},
+            "grading":   {"status": "pending", "started_at": None, "completed_at": None, "duration_s": None, "msg": ""},
+        },
+    }
+    background_tasks.add_task(run_pipeline_background, deal_id, submission)
+    return JSONResponse({"deal_id": deal_id, "status": "pipeline_started"})
+
+@app.post("/api/submit-deal")
+async def submit_deal_alias(submission: DealSubmission, background_tasks: BackgroundTasks):
     deal_id = f"DC{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
     DEALS[deal_id] = {
         "deal_id": deal_id,
